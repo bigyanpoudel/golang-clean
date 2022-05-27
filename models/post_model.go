@@ -1,6 +1,9 @@
 package models
 
 import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -22,4 +25,27 @@ func (b *Post) BeforeCreate(db *gorm.DB) error {
 	id, err := uuid.NewRandom()
 	b.ID = BINARY16(id)
 	return err
+}
+
+type PostWithUser []Post
+
+func (p PostWithUser) ToMapPosts() []gin.H {
+	data := []gin.H{}
+	for _, p := range p {
+
+		data = append(data, gin.H{
+			"id":          p.ID,
+			"image":       p.Image,
+			"title":       p.Title,
+			"description": p.Description,
+			"created_at":  p.CreatedAt,
+			"updated_at":  p.UpdatedAt,
+			"user": gin.H{
+				"id":   p.User.ID,
+				"name": p.User.Name,
+			},
+		})
+	}
+	fmt.Println("Data", data)
+	return data
 }

@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"go-clean-api/api/response"
 	"go-clean-api/api/service"
 	"go-clean-api/infrastructure"
 	"go-clean-api/models"
+	"go-clean-api/utils"
+	"math"
 	"net/http"
 	"time"
 
@@ -19,6 +22,7 @@ type UserController struct {
 	firebaseService service.FirebaseService
 	awsServce       service.AWSService
 	env             infrastructure.Env
+	// paginate
 }
 
 func NewUserController(logger infrastructure.Logger, handler infrastructure.RequestHandler, s service.UserService, firebaseService service.FirebaseService, awsServce service.AWSService, env infrastructure.Env) UserController {
@@ -34,8 +38,12 @@ func NewUserController(logger infrastructure.Logger, handler infrastructure.Requ
 
 func (c UserController) GetAllUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		page := ctx.MustGet("page").(int64)
+		limit := ctx.MustGet("limit").(int64)
 		var users []models.User
-		err := c.UserService.GetAllUser(&users)
+
+		total, err := c.UserService.GetAllUserPagination(&users, int(page), int(limit))
+		last_page := (float64)(total / int(limit))
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": err,
@@ -43,9 +51,24 @@ func (c UserController) GetAllUser() gin.HandlerFunc {
 			return
 		}
 		ctx.JSON(http.StatusOK, gin.H{
-			"done": 200,
-			"data": users,
+			"done":      200,
+			"data":      users,
+			"page":      page,
+			"last_page": math.Ceil(last_page),
 		})
+	}
+}
+
+func (c UserController) GetUsers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		users, err := c.UserService.SetPaginationScope(utils.Paginate(ctx)).GetAllUsers()
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err,
+			})
+
+		}
+		response.JSONWithPagination(ctx, http.StatusOK, users)
 	}
 }
 
@@ -237,6 +260,34 @@ func (c UserController) FileUpload() gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"file":    url,
+		})
+	}
+}
+func (c UserController) SearchUser() gin.HandlerFunc {
+
+	return func(ctx *gin.Context) {
+		var userInput models.UserSearch
+		page := ctx.MustGet("page").(int64)
+		limit := ctx.MustGet("limit").(int64)
+		if err := ctx.ShouldBindJSON(&userInput); err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error":   err.Error(),
+				"success": false,
+			})
+		}
+		users, total, err := c.UserService.SearchUser(userInput, int(page), int(limit))
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error":   err.Error(),
+				"success": false,
+			})
+		}
+		last_page := int(total) / int(limit)
+		ctx.JSON(http.StatusOK, gin.H{
+			"success":   true,
+			"data":      users,
+			"page":      page,
+			"last_page": math.Ceil(float64(last_page)),
 		})
 	}
 }

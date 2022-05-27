@@ -6,6 +6,7 @@ var Module = fx.Options(
 	fx.Provide(NewMiddlewares),
 	fx.Provide(NewAuthMiddlerware),
 	fx.Provide(NewFirebaseAuth),
+	fx.Provide(NewPagination),
 )
 
 type IMiddleware interface {

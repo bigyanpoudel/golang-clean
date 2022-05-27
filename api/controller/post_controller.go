@@ -35,9 +35,27 @@ func (c PostController) GetAllPost() gin.HandlerFunc {
 				"error":   err.Error(),
 			})
 		}
+		data := []gin.H{}
+		for _, p := range posts {
+
+			data = append(data, gin.H{
+				"id":          p.ID,
+				"image":       p.Image,
+				"title":       p.Title,
+				"description": p.Description,
+				"created_at":  p.CreatedAt,
+				"updated_at":  p.UpdatedAt,
+				"user": gin.H{
+					"id":   p.User.ID,
+					"name": p.User.Name,
+				},
+			})
+		}
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"data":    posts,
+			"data":    data,
+			"hello":   "hello",
 		})
 	}
 }

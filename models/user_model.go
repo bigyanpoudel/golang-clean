@@ -31,3 +31,16 @@ type UserSignupInput struct {
 	Address  string `json:"address" binding:"required"`
 	Name     string `json:"name" form:"name" binding:"required"`
 }
+
+type UserSearch struct {
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	SortBy  string `json:"sortBy"`
+}
+
+type UserPopulate struct {
+	Name     string `json:"name" form:"name" binding:"required"`
+	Email    string `json:"email" form:"email" binding:"required,lte=100"`
+	Address  string `json:"address" binding:"required"`
+	Verified bool   `json:"verified"`
+}

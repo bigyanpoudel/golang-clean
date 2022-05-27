@@ -29,7 +29,7 @@ func (s PostService) GetPostById(p *models.Post, id models.BINARY16) error {
 	return s.PostRepository.GetPostById(p, id)
 }
 func (s PostService) UpdatePost(p *models.Post) error {
-	return s.PostRepository.UpdatePost(p)
+	return s.PostRepository.Save(&p).Error
 }
 
 func (s PostService) GetPostByUserId(p *[]models.Post, id models.BINARY16) error {
